@@ -106,12 +106,12 @@ The same thing happens for functions. The CPU usually reads stuff in memory in c
 
     Next Instruction Address (return address)
 
-  esp correspond to the current position in the stack. esp+0x4 is where argc data is stored.
+  esp correspond to the current position in the stack. esp+0x4 points to the address of the first Byte of the 4 Bytes set containing argc value.
 
 - **`and esp,0xfffffff0`**
 
   This is an and operation.
-  The and operator compare bit by bit the two numbers. It returns 1 if both bits are 1, otherwise 0. 
+  The and operator compare bit by bit the two numbers. It gives 1 if both bits are 1, otherwise 0. 
 
   0xfffffff0 in binary is -> 11111111 11111111 11111111 11110000
 
@@ -119,7 +119,7 @@ The same thing happens for functions. The CPU usually reads stuff in memory in c
 
   This operation is needed for ensuring a 16Byte data alignment, meaning that esp, after the and operation, by having the last 4 bits zero will have an address that is divisible by 16.
 
-  In order to understand we can make an example using base-10 numbers. In order to make a base-10 number, like 37, divisible by 30 you can just remove the last unit (in this case 7) and put a 0 instead.
+  In order to understand we can make an example using base-10 numbers. In order to make a base-10 number, like 37, a new number that is divisible by 10 you can just remove the last unit (in this case 7) and put a 0 instead.
 
   The same thing happens for hexadecimal numbers. Let's suppose:
 
@@ -153,9 +153,9 @@ The address stored in `esp` is now `0x00000070`, which is divisible by 16.
 
 - **`mov ebp, esp`**
 
-  esp address is moved (copied actually as esp content remains intact) from esp into ebp. At this point both ebp and esp points to the same point in stack.
+  esp address is moved (copied, actually, as esp content remains intact) from esp into ebp. At this point both ebp and esp points to the same point in stack.
 
-  Everything that was done till this point is all setup. ebp indicates the current stack frame base, so usually it stays fixed, while esp tends to move constantly. 
+  Everything that was done till this point is all basically setup. ebp indicates the current stack frame base, so usually it stays fixed, while esp tends to move constantly. 
 
 - **`push ecx`**
 
@@ -177,7 +177,7 @@ The address stored in `esp` is now `0x00000070`, which is divisible by 16.
   1) The next instruction is located at address 0x8048419. So this value is pushed onto the stack, so that when the called function ends the CPU just pop the address and continues from there.
   2) The function at address 0x80482d0 is executed.
 
-  Modern compilers like GCC replace prints with puts whenever you print a plain string with no format specifiers, like %d or %s. Puts is much faster compared to printf.
+  Modern compilers like GCC replace `printf()` with `puts()` whenever you print a plain string with no format specifiers, like %d or %s. Puts is much faster compared to printf.
 
   Why <puts@plt> ? 
 
@@ -282,11 +282,11 @@ jne 8048429 <main+0x2e>
 
 - **`cmp DWORD PTR [ebp-0xc], 0xa`**
 
-  The `cmp a, b`command basically does this: ```c a - b = result```. If result is positive then the first value is greater than the second one. If result is negative the second value is greater than the firts one and if the result is 0 then the values are equal.
+  The `cmp a, b`command basically does this: `a - b = result`. If result is positive then the first value is greater than the second one. If result is negative the second value is greater than the first one and if the result is 0 then the values are equal.
 
   **Regarding EFLAGS**
 
-  Eflags are bits that live inside the EFLAGS register (4B register from x86 systems). Each bit from this register have a specific meaning. The important ones to know just to start are these:
+  Eflags are bits that live inside the EFLAGS register (4B register for x86 systems). Each bit from this register have a specific meaning. The important ones to know just to start are these:
   • CF (Carry Flag, Bit 0): Unsigned out of bounds
     If in the addition the unsigned number go past its max :\
     `cmp a, b` -> CF=1 if a+b go past the max value the ceiling (for example the max value for a 1 Byte number is 2^8-1, meaning 255) or below the floor (unsigned integers cannot be negative, 0 is the minimum value) 
@@ -299,7 +299,7 @@ jne 8048429 <main+0x2e>
   
 - **`jne 8048429 <main+0x2e>`**
 
-  If the previously compared value are not equal the CPU will jump to the address 0x8048429 (main address + 0x2e). Otherwise it willjust continue with the next instructions.
+  If the previously compared value are not equal the CPU will jump to the address 0x8048429 (main address + 0x2e). Otherwise it will just continue with the next instructions.
 
 ### SECOND MAIN SECTION
 
@@ -371,14 +371,14 @@ The program just prints on output: "x = ten"
   The value inside ebp-0xc, that is a 4B value (probably an integer), and the value at address 0x80484c0 are pushed onto the stack. Both of those values will be used by the printf function as parameters. 
 
   After that 0x1 (1) is added to the value inside the address ebp-0xc.
-  This loop continues as long as the value contained inside ebp-0xc is <=0x13 (19), meaning the loop will repeat itself 20 times (starting from zero, till 19).
+  This loop continues as long as the value contained inside ebp-0xc is <= 0x13 (19), meaning the loop will repeat itself 20 times (starting from zero, till 19).
 
   The command `x/s 0x80484c0` prints out:\
 ```nasm
 (gdb) x/s 0x80484c0
 0x80484c0:      "%d "
 ```
-  This means that the value at address `0x80484c0` is the format string, and it indicates the format specifier for the second parameter, that is the same one that is firstly pushed onto the stack: `push   DWORD PTR [ecx-0xc]`.
+  This means that the value at address `0x80484c0` is the format string, and it indicates the format specifier for the second parameter, that is the one that is firstly pushed onto the stack: `push   DWORD PTR [ecx-0xc]`.
 
   This can feel quite strange because it would be much intuitive pushing onto the stack the format specifier and then the value we wanna print, but in this case it happens the opposite because the calling convention used by printf function here is `cdecl`, where arguments are pushed from right to left.
 
@@ -392,4 +392,4 @@ The program just prints on output: "x = ten"
 
 These were my first analyzed binary code and i think it wasn't that bad. Once you understand that most of the complexity derives from the CPU setup decisions and can actually select the important parts of the binary data, everything is easier.
 
-My english is not that good :(, sorry for that, but it's not my first language. Nonetheless, i hope that whoever read all this understood even only a bit. Bye bye
+My english is not that good :( sorry for that, but it's not my first language. Nonetheless, i hope that whoever read all this understood even only a bit. Bye bye
