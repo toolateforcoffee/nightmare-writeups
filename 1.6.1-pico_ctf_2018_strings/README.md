@@ -47,4 +47,4 @@
 
   The flag: picoCTF{sTrIngS_sAVeS_Time_3f712a28}
   
-  si gode, bye bye
+  Si gode, bye bye
